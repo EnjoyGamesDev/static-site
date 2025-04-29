@@ -1,9 +1,14 @@
 import unittest
 from textnode import TextType, TextNode
-from inline_markdown import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image
+from inline_markdown import (
+    split_nodes_delimiter, 
+    extract_markdown_images, 
+    extract_markdown_links, 
+    split_nodes_image,
+    split_nodes_link
+    )
 
-
-class TestNodeDelimiter(unittest.TestCase):
+class TestInlineMarkDown(unittest.TestCase):
     def test_split_code_backticks(self):
         node = TextNode(f"This is `code` example", TextType.TEXT)
         new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
@@ -83,7 +88,7 @@ class TestNodeDelimiter(unittest.TestCase):
         )
         self.assertListEqual([], matches)
         
-    def test_split_images(self):
+    def test_split_images_and_text(self):
         node = TextNode(
             "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png) and another ![second image](https://i.imgur.com/3elNhQu.png)",
             TextType.TEXT,
@@ -97,6 +102,108 @@ class TestNodeDelimiter(unittest.TestCase):
                 TextNode(
                     "second image", TextType.IMAGE, "https://i.imgur.com/3elNhQu.png"
                 ),
+            ],
+            new_nodes,
+        )
+        
+    def test_split_no_images(self):
+        node = TextNode(
+            "This is just text",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_image([node])
+        self.assertListEqual(
+            [
+                TextNode("This is just text", TextType.TEXT)
+            ],
+            new_nodes,
+        )
+        
+    def test_split_only_images(self):
+        node = TextNode(
+            "![image](https://i.imgur.com/zjjcJKZ.png)![second image](https://i.imgur.com/3elNhQu.png)",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_image([node])
+        self.assertListEqual(
+            [
+                TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
+                TextNode(
+                    "second image", TextType.IMAGE, "https://i.imgur.com/3elNhQu.png"
+                )
+            ],
+            new_nodes,
+        )
+        
+    def test_split_single_image(self):
+        node = TextNode(
+            "![image](https://i.imgur.com/zjjcJKZ.png)",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_image([node])
+        self.assertListEqual(
+            [
+                TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png")
+            ],
+            new_nodes,
+        )
+        
+    def test_split_links_and_text(self):
+        node = TextNode(
+            "This is text with a [Warframe](https://warframe.com) and another [Warframe Wiki](https://wiki.warframe.com)",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_link([node])
+        self.assertListEqual(
+            [
+                TextNode("This is text with a ", TextType.TEXT),
+                TextNode("Warframe", TextType.LINK, "https://warframe.com"),
+                TextNode(" and another ", TextType.TEXT),
+                TextNode(
+                    "Warframe Wiki", TextType.LINK, "https://wiki.warframe.com"
+                ),
+            ],
+            new_nodes,
+        )
+        
+    def test_split_no_links(self):
+        node = TextNode(
+            "This is just text with no link",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_link([node])
+        self.assertListEqual(
+            [
+                TextNode("This is just text with no link", TextType.TEXT)
+            ],
+            new_nodes,
+        )
+        
+    def test_split_only_links(self):
+        node = TextNode(
+            "[Warframe](https://warframe.com)[Warframe Wiki](https://wiki.warframe.com)",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_link([node])
+        self.assertListEqual(
+            [
+                TextNode("Warframe", TextType.LINK, "https://warframe.com"),
+                TextNode(
+                    "Warframe Wiki", TextType.LINK, "https://wiki.warframe.com"
+                )
+            ],
+            new_nodes,
+        )
+        
+    def test_split_single_link(self):
+        node = TextNode(
+            "[Warframe](https://warframe.com)",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_link([node])
+        self.assertListEqual(
+            [
+                TextNode("Warframe", TextType.LINK, "https://warframe.com")
             ],
             new_nodes,
         )
