@@ -59,14 +59,19 @@ def split_nodes_image(old_nodes):
         for image_alt, image_link in images:
             parts = current_text.split(f"![{image_alt}]({image_link})", 1)
             
-            if parts[0]:
+            if len(parts) != 2:
+                raise Exception("Invalid MarkDown syntax: unmatched delimiter")
+            if parts[0] != "":
                 new_nodes.append(TextNode(parts[0], TextType.TEXT))
         
             new_nodes.append(TextNode(image_alt, TextType.IMAGE, image_link))
             
             if len(parts) > 1:
                 current_text = parts[1]
-            
+        
+        if current_text != "":
+            new_nodes.append(TextNode(current_text, TextType.TEXT))    
+        
     return new_nodes
         
 
@@ -90,12 +95,32 @@ def split_nodes_link(old_nodes):
         for link_text, url in links:
             parts = current_text.split(f"[{link_text}]({url})", 1)
             
-            if parts[0]:
+            if len(parts) != 2:
+                raise Exception("Invalid MarkDown syntax: unmatched delimiter")
+            if parts[0] != "":
                 new_nodes.append(TextNode(parts[0], TextType.TEXT))
         
             new_nodes.append(TextNode(link_text, TextType.LINK, url))
             
             if len(parts) > 1:
                 current_text = parts[1]
-            
+        
+        if current_text != "":
+            new_nodes.append(TextNode(current_text, TextType.TEXT))    
+    
     return new_nodes
+
+def text_to_textnodes(text):
+    # Convert the entire text to a single TextNode
+    nodes = [TextNode(text, TextType.TEXT)]
+    
+    # First, handle delimited text (bold, italic, code)
+    nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
+    nodes = split_nodes_delimiter(nodes, "_", TextType.ITALIC)
+    nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)
+    
+    # Then handle special markdown elements (images and links)
+    nodes = split_nodes_image(nodes)
+    nodes = split_nodes_link(nodes)
+    
+    return nodes
