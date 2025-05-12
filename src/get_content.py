@@ -22,9 +22,13 @@ def generate_page(from_path, template_path, dest_path, basepath="/"):
     html_content = markdown_to_html_node(content).to_html()
     title = extract_title(content)
     
-    final_content = template.replace("{{ Title }}", title).replace("{{ Content }}", html_content)
-    final_content = final_content.replace('href="/', f'href="{basepath}')
-    final_content = final_content.replace('src="/', f'src="{basepath}')
+    final_content = (
+    template
+    .replace("{{ Title }}", title)
+    .replace("{{ Content }}", html_content)
+    .replace('href="/', f'href="{basepath}')
+    .replace('src="/', f'src="{basepath}')
+)
     
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
     
@@ -44,4 +48,4 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, bas
         elif os.path.isfile(entry_path) and entry_path.endswith(".md"):
             output_filename = os.path.join(dest_dir_path, os.path.basename(entry_path).replace(".md", ".html"))
             print(f"Generating HTML file: {output_filename} from {entry_path}")
-            generate_page(entry_path, template_path, output_filename)
+            generate_page(entry_path, template_path, output_filename, basepath)
